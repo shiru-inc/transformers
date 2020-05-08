@@ -405,7 +405,10 @@ class Trainer:
                             global_step == 1 and self.args.logging_first_step
                         ):
                             logs = {}
-                            if self.args.evaluate_during_training:
+                            if (self.args.evaluate_during_training and (
+                                self.args.eval_steps > 0 and global_step % self.args.eval_steps == 0) or (
+                                global_step == 1 and self.args.logging_first_step)
+                            ):
                                 results = self.evaluate()
                                 for key, value in results.items():
                                     eval_key = "eval_{}".format(key)
