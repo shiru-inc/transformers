@@ -445,7 +445,10 @@ class Trainer:
 
                             self._log(logs)
 
-                            if self.args.evaluate_during_training:
+                            if (self.args.evaluate_during_training and (
+                                self.args.eval_steps > 0 and self.global_step % self.args.eval_steps == 0) or (
+                                self.global_step == 1 and self.args.logging_first_step)
+                            ):
                                 self.evaluate()
 
                         if self.args.save_steps > 0 and self.global_step % self.args.save_steps == 0:
