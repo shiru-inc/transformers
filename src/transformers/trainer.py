@@ -399,7 +399,7 @@ class Trainer:
 
         tr_loss = 0.0
         logging_loss = 0.0
-        min_eval_loss = np.inf
+        best_eval_metric = np.inf if self.args.best_eval_metric_direction == 'min' else -np.inf
         model.zero_grad()
         train_iterator = trange(
             epochs_trained, int(num_train_epochs), desc="Epoch", disable=not self.is_local_master()
@@ -452,19 +452,21 @@ class Trainer:
                             ):
                                 metrics = self.evaluate()
 
-                                # if new best eval loss, save model
-                                eval_loss = metrics.get('eval_loss', np.inf)
-                                if eval_loss < min_eval_loss:
-                                    [shutil.rmtree(str(x)) for x in Path(self.args.output_dir).glob(f"besteval-*")]
+                                # if new best eval metric, save model
+                                key = f'eval_{self.args.best_eval_metric}'
+                                eval_metric = metrics[key]
+                                if self.args.save_best_eval and ((eval_metric < best_eval_metric)
+                                    == (self.args.best_eval_metric_direction == 'min')
+                                ):
+                                    [shutil.rmtree(str(x)) for x in Path(self.args.output_dir).glob(f"best-eval_*")]
                                     output_dir = os.path.join(
-                                        self.args.output_dir, f"besteval-{eval_loss}-{self.global_step}"
-                                    )
+                                        self.args.output_dir, f"best-{key}-{eval_metric}-{self.global_step}")
                                     self.save_model(output_dir)
                                     torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                                     torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
-                                    logger.info("New record eval loss %f => saved model, optimizer and " \
-                                        "scheduler states to %s", eval_loss, output_dir)
-                                    min_eval_loss = eval_loss
+                                    logger.info("New record %s = %f => saved model, optimizer and " \
+                                        "scheduler states to %s", key, eval_metric, output_dir)
+                                    best_eval_metric = eval_metric
 
                         if self.args.save_steps > 0 and self.global_step % self.args.save_steps == 0:
                             # In all cases (even distributed/parallel), self.model is always a reference

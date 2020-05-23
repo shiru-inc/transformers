@@ -81,6 +81,10 @@ class TrainingArguments:
     logging_first_step: bool = field(default=False, metadata={"help": "Log and eval the first global_step"})
     logging_steps: int = field(default=500, metadata={"help": "Log every X updates steps."})
     eval_steps: int = field(default=500, metadata={"help": "Run evaluation and log every X updates steps."})
+    save_best_eval: bool = field(default=True, metadata={"help": "Save model with best best_eval_metric."})
+    best_eval_metric: str = field(
+        default="loss", metadata={"help": "Specify metric used to judge best model performance on eval set (e.g. 'acc')"})
+    best_eval_metric_direction: str = field(default="min", metadata={"help": "Should best_eval_metric be 'min' or 'max'?"})
     save_steps: int = field(default=500, metadata={"help": "Save checkpoint every X updates steps."})
     save_total_limit: Optional[int] = field(
         default=None,
